@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_super_segura'
@@ -17,31 +18,44 @@ if not os.path.exists(UPLOAD_FOLDER):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def get_db_connection():
+    database_url = os.environ.get("DATABASE_URL")
+    
+    # Si estamos en Render, usará PostgreSQL. Si no hay variable, usará una base local por si haces pruebas en tu PC (opcional)
+    if database_url:
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+    else:
+        # Fallback local o manejo si prefieres forzar PostgreSQL
+        raise RuntimeError("No se encontró la variable de entorno DATABASE_URL")
+    return conn
+
 def init_db():
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # Tabla de usuarios (Administradores y Motorizados)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             nombre_completo TEXT NOT NULL,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            rol TEXT NOT NULL -- 'admin' o 'motorizado'
+            rol TEXT NOT NULL
         )
     ''')
     
     # Tabla de entregas / documentos
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS entregas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             tipo_documento TEXT NOT NULL,
             numero_documento TEXT NOT NULL,
             destinatario TEXT NOT NULL,
             direccion TEXT NOT NULL,
             motorizado_id INTEGER,
-            estado TEXT DEFAULT 'pendiente', -- 'pendiente' o 'entregado'
+            estado TEXT DEFAULT 'pendiente',
             tipo_entrega TEXT,
             parentesco TEXT,
             nombre_receptor TEXT,
@@ -55,32 +69,14 @@ def init_db():
         )
     ''')
     
-    # Agregar columnas faltantes de forma segura si la tabla ya existía previamente
-    columnas_nuevas = [
-        ("tipo_entrega", "TEXT"),
-        ("parentesco", "TEXT"),
-        ("nombre_receptor", "TEXT"),
-        ("dni_receptor", "TEXT"),
-        ("celular_receptor", "TEXT"),
-        ("foto_casa", "TEXT"),
-        ("foto_calle", "TEXT"),
-        ("foto_cargo_o_preaviso", "TEXT"),
-        ("firma", "TEXT")
-    ]
-    
-    for col_nombre, col_tipo in columnas_nuevas:
-        try:
-            cursor.execute(f"ALTER TABLE entregas ADD COLUMN {col_nombre} {col_tipo}")
-        except sqlite3.OperationalError:
-            pass # La columna ya existe
-    
     # Crear admin por defecto si no existe
     cursor.execute("SELECT * FROM usuarios WHERE username = 'admin'")
     if not cursor.fetchone():
-        cursor.execute("INSERT INTO usuarios (nombre_completo, username, password, rol) VALUES (?, ?, ?, ?)",
+        cursor.execute("INSERT INTO usuarios (nombre_completo, username, password, rol) VALUES (%s, %s, %s, %s)",
                        ('Administrador General', 'admin', '1234', 'admin'))
         
     conn.commit()
+    cursor.close()
     conn.close()
 
 @app.route('/')
@@ -93,11 +89,11 @@ def login():
         username = request.form['usuario']
         password = request.form['password']
         
-        conn = sqlite3.connect('database.db')
-        conn.row_factory = sqlite3.Row
+        conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE username = ? AND password = ?", (username, password))
+        cursor.execute("SELECT * FROM usuarios WHERE username = %s AND password = %s", (username, password))
         user = cursor.fetchone()
+        cursor.close()
         conn.close()
         
         if user:
@@ -120,8 +116,7 @@ def admin_dashboard():
     if 'rol' not in session or session['rol'] != 'admin':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -140,6 +135,7 @@ def admin_dashboard():
     ''')
     entregadas = cursor.fetchall()
     
+    cursor.close()
     conn.close()
     return render_template('admin_dashboard.html', pendientes=pendientes, entregadas=entregadas)
 
@@ -157,16 +153,14 @@ def limpiar_sistema():
                     os.unlink(file_path)
 
         # 2. Vaciar tablas de la base de datos de manera limpia
-        conn = sqlite3.connect('database.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Borrar todas las entregas de prueba
         cursor.execute("DELETE FROM entregas")
-        
-        # Borrar a todos los usuarios excepto al administrador principal ('admin')
         cursor.execute("DELETE FROM usuarios WHERE username != 'admin'")
         
         conn.commit()
+        cursor.close()
         conn.close()
 
         flash('Sistema limpiado correctamente: registros de base de datos y archivos de prueba eliminados.', 'success')
@@ -186,23 +180,24 @@ def gestionar_motorizados():
         password = request.form['password']
         
         try:
-            conn = sqlite3.connect('database.db')
+            conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO usuarios (nombre_completo, username, password, rol) VALUES (?, ?, ?, 'motorizado')",
+            cursor.execute("INSERT INTO usuarios (nombre_completo, username, password, rol) VALUES (%s, %s, %s, 'motorizado')",
                            (nombre, username, password))
             conn.commit()
+            cursor.close()
             conn.close()
             flash('Motorizado creado exitosamente', 'success')
-        except sqlite3.IntegrityError:
+        except psycopg2.errors.UniqueViolation:
             flash('El nombre de usuario ya existe', 'danger')
             
         return redirect(url_for('gestionar_motorizados'))
         
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM usuarios WHERE rol = 'motorizado'")
     motorizados = cursor.fetchall()
+    cursor.close()
     conn.close()
     
     return render_template('admin_motorizados.html', motorizados=motorizados)
@@ -212,10 +207,11 @@ def eliminar_motorizado(id):
     if 'rol' not in session or session['rol'] != 'admin':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM usuarios WHERE id = ? AND rol = 'motorizado'", (id,))
+    cursor.execute("DELETE FROM usuarios WHERE id = %s AND rol = 'motorizado'", (id,))
     conn.commit()
+    cursor.close()
     conn.close()
     flash('Motorizado eliminado', 'success')
     return redirect(url_for('gestionar_motorizados'))
@@ -225,8 +221,7 @@ def gestionar_entregas():
     if 'rol' not in session or session['rol'] != 'admin':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     if request.method == 'POST':
@@ -238,9 +233,10 @@ def gestionar_entregas():
         
         cursor.execute('''
             INSERT INTO entregas (tipo_documento, numero_documento, destinatario, direccion, motorizado_id)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         ''', (tipo_doc, nro_doc, destinatario, direccion, motorizado_id))
         conn.commit()
+        cursor.close()
         conn.close()
         flash('Entrega creada y asignada correctamente', 'success')
         return redirect(url_for('gestionar_entregas'))
@@ -254,6 +250,7 @@ def gestionar_entregas():
         LEFT JOIN usuarios u ON e.motorizado_id = u.id
     ''')
     entregas = cursor.fetchall()
+    cursor.close()
     conn.close()
     
     return render_template('admin_entregas.html', motorizados=motorizados, entregas=entregas)
@@ -263,10 +260,11 @@ def eliminar_entrega(id):
     if 'rol' not in session or session['rol'] != 'admin':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM entregas WHERE id = ?", (id,))
+    cursor.execute("DELETE FROM entregas WHERE id = %s", (id,))
     conn.commit()
+    cursor.close()
     conn.close()
     flash('Entrega eliminada correctamente', 'success')
     return redirect(url_for('gestionar_entregas'))
@@ -276,16 +274,16 @@ def motorizado_dashboard():
     if 'rol' not in session or session['rol'] != 'motorizado':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM entregas WHERE motorizado_id = ? AND estado = 'pendiente'", (session['user_id'],))
+    cursor.execute("SELECT * FROM entregas WHERE motorizado_id = %s AND estado = 'pendiente'", (session['user_id'],))
     pendientes = cursor.fetchall()
     
-    cursor.execute("SELECT * FROM entregas WHERE motorizado_id = ? AND estado = 'entregado'", (session['user_id'],))
+    cursor.execute("SELECT * FROM entregas WHERE motorizado_id = %s AND estado = 'entregado'", (session['user_id'],))
     completadas = cursor.fetchall()
     
+    cursor.close()
     conn.close()
     
     return render_template('motorizado_dashboard.html', nombre_motorizado=session['nombre'], pendientes=pendientes, completadas=completadas)
@@ -295,11 +293,11 @@ def motorizado_detalle(entrega_id):
     if 'rol' not in session or session['rol'] != 'motorizado':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM entregas WHERE id = ? AND motorizado_id = ? AND estado = 'entregado'", (entrega_id, session['user_id']))
+    cursor.execute("SELECT * FROM entregas WHERE id = %s AND motorizado_id = %s AND estado = 'entregado'", (entrega_id, session['user_id']))
     entrega = cursor.fetchone()
+    cursor.close()
     conn.close()
     
     if not entrega:
@@ -313,15 +311,15 @@ def registrar_entrega(entrega_id):
     if 'rol' not in session or session['rol'] != 'motorizado':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM entregas WHERE id = ? AND motorizado_id = ? AND estado = 'pendiente'", 
+    cursor.execute("SELECT * FROM entregas WHERE id = %s AND motorizado_id = %s AND estado = 'pendiente'", 
                    (entrega_id, session['user_id']))
     entrega = cursor.fetchone()
     
     if not entrega:
+        cursor.close()
         conn.close()
         flash('Entrega no encontrada o no autorizada', 'danger')
         return redirect(url_for('motorizado_dashboard'))
@@ -334,12 +332,10 @@ def registrar_entrega(entrega_id):
         celular_receptor = request.form.get('celular_receptor')
         firma_base64 = request.form.get('firma_base64')
         
-        # Mantener los valores anteriores si ya existían y no se sube un archivo nuevo
         foto_casa_filename = entrega['foto_casa']
         foto_calle_filename = entrega['foto_calle']
         foto_cargo_filename = entrega['foto_cargo_o_preaviso']
         
-        # 1. Captura dinámica de Foto de Casa con validación de extensión
         file_casa = (request.files.get('foto_casa') or 
                      request.files.get('foto_casa_directo') or 
                      request.files.get('foto_casa_preaviso') or 
@@ -350,7 +346,6 @@ def registrar_entrega(entrega_id):
             foto_casa_filename = f"casa_{entrega_id}_{filename_seguro}"
             file_casa.save(os.path.join(app.config['UPLOAD_FOLDER'], foto_casa_filename))
             
-        # 2. Captura dinámica de Foto de Calle con validación de extensión
         file_calle = (request.files.get('foto_calle') or 
                       request.files.get('foto_calle_directo') or 
                       request.files.get('foto_calle_preaviso') or 
@@ -361,7 +356,6 @@ def registrar_entrega(entrega_id):
             foto_calle_filename = f"calle_{entrega_id}_{filename_seguro}"
             file_calle.save(os.path.join(app.config['UPLOAD_FOLDER'], foto_calle_filename))
             
-        # 3. Captura dinámica de Foto de Cargo, Preaviso o Bajo Puerta con validación
         file_cargo = (request.files.get('foto_cargo') or 
                       request.files.get('foto_preaviso') or 
                       request.files.get('foto_cargo_directo') or 
@@ -381,26 +375,28 @@ def registrar_entrega(entrega_id):
         cursor.execute('''
             UPDATE entregas SET
                 estado = 'entregado',
-                tipo_entrega = ?,
-                parentesco = ?,
-                nombre_receptor = ?,
-                dni_receptor = ?,
-                celular_receptor = ?,
-                foto_casa = ?,
-                foto_calle = ?,
-                foto_cargo_o_preaviso = ?,
-                firma = ?
-            WHERE id = ?
+                tipo_entrega = %s,
+                parentesco = %s,
+                nombre_receptor = %s,
+                dni_receptor = %s,
+                celular_receptor = %s,
+                foto_casa = %s,
+                foto_calle = %s,
+                foto_cargo_o_preaviso = %s,
+                firma = %s
+            WHERE id = %s
         ''', (
             tipo_entrega, parentesco, nombre_receptor, dni_receptor, celular_receptor,
             foto_casa_filename, foto_calle_filename, foto_cargo_filename, firma_base64, entrega_id
         ))
         conn.commit()
+        cursor.close()
         conn.close()
         
         flash('Entrega registrada exitosamente', 'success')
         return redirect(url_for('motorizado_dashboard'))
         
+    cursor.close()
     conn.close()
     return render_template('motorizado_formulario.html', entrega=entrega, nombre_motorizado=session['nombre'])
 
@@ -408,6 +404,8 @@ def registrar_entrega(entrega_id):
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
 if __name__ == '__main__':
+    init_db()  # Inicializa la estructura en PostgreSQL al arrancar
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
