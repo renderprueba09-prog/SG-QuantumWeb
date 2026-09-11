@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Entregas</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; margin-bottom: 15px; text-decoration: none; color: #007bff; font-weight: bold; }
+        h2, h3 { color: #007bff; border-bottom: 2px solid #eaeaea; padding-bottom: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button { background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px 15px; text-align: left; font-size: 14px; }
+        th { background: #007bff; color: white; font-weight: bold; }
+        .alert { padding: 10px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 15px; }
+        .btn-danger { background: #dc3545; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 13px; display: inline-block; }
+        .btn-danger:hover { background: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('admin_dashboard') }}" class="back-link">&larr; Volver al Panel</a>
+        <h2>Crear y Asignar Nueva Entrega</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label>Tipo de Documento:</label>
+                <input type="text" name="tipo_documento" placeholder="Ej. Notificación, Oficio, Carta" required>
+            </div>
+            <div class="form-group">
+                <label>Número de Documento:</label>
+                <input type="text" name="numero_documento" required>
+            </div>
+            <div class="form-group">
+                <label>Nombre de la Persona a quien se le va a entregar:</label>
+                <input type="text" name="destinatario" required>
+            </div>
+            <div class="form-group">
+                <label>Dirección:</label>
+                <input type="text" name="direccion" required>
+            </div>
+            <div class="form-group">
+                <label>Asignar Motorizado:</label>
+                <select name="motorizado_id" required>
+                    <option value="">Seleccione un motorizado</option>
+                    {% for m in motorizados %}
+                    <option value="{{ m.id }}">{{ m.nombre_completo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Guardar y Asignar Entrega</button>
+        </form>
+
+        <h3 style="margin-top: 40px;">Todas las Entregas Registradas</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo / Nro Doc</th>
+                    <th>Destinatario</th>
+                    <th>Dirección</th>
+                    <th>Motorizado</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entregas %}
+                <tr>
+                    <td><strong>{{ e.tipo_documento }}</strong><br><span style="color: #666; font-size: 12px;">{{ e.numero_documento }}</span></td>
+                    <td>{{ e.destinatario }}</td>
+                    <td>{{ e.direccion }}</td>
+                    <td>{{ e.motorizado_nombre or 'Sin asignar' }}</td>
+                    <td><span style="text-transform: capitalize; font-weight: bold; color: {% if e.estado == 'entregado' %}#28a745{% else %}#e0a800{% endif %};">{{ e.estado }}</span></td>
+                    <td>
+                        <a href="{{ url_for('eliminar_entrega', id=e.id) }}" class="btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta entrega?')">Eliminar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center; color: #666; padding: 20px;">No hay entregas creadas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

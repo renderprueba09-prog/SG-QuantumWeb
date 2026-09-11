@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Entrega - SG-QUANTUM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-emerald: #047857;
+            --emerald-dark: #022c22;
+            --emerald-light: #ecfdf5;
+            --gold-accent: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding-bottom: 50px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-glow-effect {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 10% 10%, rgba(4, 120, 87, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
+                linear-gradient(135deg, #022c22 0%, #0f172a 100%);
+        }
+
+        .bg-grid {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 32px 32px;
+            z-index: -1;
+        }
+
+        .navbar-quantum {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-brand-custom i {
+            font-size: 1.5rem;
+            color: #34d399;
+        }
+
+        .navbar-brand-custom h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .navbar-brand-custom span {
+            font-size: 0.75rem;
+            color: var(--gold-accent);
+            display: block;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .container-form {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .form-card {
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .form-card h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        .form-card > p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+
+        .doc-summary-box {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .doc-summary-box h5 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #34d399;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .doc-info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .doc-info-item span {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: #34d399;
+            box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.15);
+            color: #fff;
+        }
+
+        .form-control::placeholder {
+            color: #64748b;
+        }
+
+        .signature-container {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        #signature-pad {
+            width: 100%;
+            height: 180px;
+            touch-action: none;
+            background: #ffffff;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            border-radius: 10px;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .conditional-section {
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-submit-quantum {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(4, 120, 87, 0.4);
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            cursor: pointer;
+        }
+
+        .btn-submit-quantum:hover {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 25px rgba(4, 120, 87, 0.6);
+            color: #fff;
+        }
+
+        .alert-glass {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow-effect"></div>
+    <div class="bg-grid"></div>
+
+    <nav class="navbar-quantum">
+        <div class="navbar-brand-custom">
+            <i class="fas fa-clipboard-check"></i>
+            <div>
+                <h2>SG-QUANTUM</h2>
+                <span>Gestión de Notificación</span>
+            </div>
+        </div>
+        <a href="{{ url_for('motorizado_dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </nav>
+
+    <div class="container-form">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-glass alert-dismissible fade show d-flex align-items-center" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <div>{{ message }}</div>
+                        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-card">
+            <h2>Resultado de Gestión</h2>
+            <p>Selecciona el tipo de resultado de la visita y adjunta las 3 evidencias requeridas.</p>
+
+            <div class="doc-summary-box">
+                <h5><i class="fas fa-info-circle"></i> Detalles del Trámite</h5>
+                <div class="doc-info-grid">
+                    <div class="doc-info-item">
+                        <label>Tipo de Documento</label>
+                        <span>{{ entrega.tipo_documento }}</span>
+                    </div>
+                    <div class="doc-info-item">
+                        <label>N° de Documento</label>
+                        <span>{{ entrega.numero_documento }}</span>
+                    </div>
+                    <div class="doc-info-item" style="grid-column: 1 / -1; margin-top: 4px;">
+                        <label>Destinatario / Dirección</label>
+                        <span>{{ entrega.destinatario }} — <small style="color: #94a3b8;">{{ entrega.direccion }}</small></span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="quantum-form" action="{{ url_for('registrar_entrega', entrega_id=entrega.id) }}" method="POST" enctype="multipart/form-data">
+                
+                <div class="mb-4">
+                    <label for="tipo_gestion" class="form-label"><i class="fas fa-tasks me-1 text-success"></i> Estado de la Visita</label>
+                    <select class="form-select" id="tipo_gestion" name="tipo_gestion" required>
+                        <option value="" selected disabled>Seleccione el resultado...</option>
+                        <option value="directo">Entrega Exitosa / Directo</option>
+                        <option value="preaviso">Preaviso (1° Visita - Ausente)</option>
+                        <option value="bajo_puerta">Notificación Bajo Puerta (2° Visita)</option>
+                    </select>
+                </div>
+
+                <!-- SECCIÓN 1: ENTREGA DIRECTA (3 EVIDENCIAS: CASA, CALLE, CARGO + FIRMA) -->
+                <div id="seccion-directo" class="conditional-section" style="display: none;">
+                    <h5 class="text-success mb-3" style="font-size: 0.95rem; font-weight: 700;"><i class="fas fa-check-circle me-1"></i> Entrega Directa — Evidencias y Datos</h5>
+                    
+                    <div class="mb-3">
+                        <label for="recibido_por" class="form-label">Recibido por (Nombre y Apellido)</label>
+                        <input type="text" class="form-control" id="recibido_por" name="recibido_por" placeholder="Ej. Juan Pérez">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="parentesco" class="form-label">Relación o Parentesco</label>
+                        <select class="form-select" id="parentesco" name="parentesco">
+                            <option value="" selected disabled>Seleccione...</option>
+                            <option value="Titular">Titular</option>
+                            <option value="Familiar">Familiar</option>
+                            <option value="Compañero de trabajo">Compañero de trabajo</option>
+                            <option value="Vigilante / Recepción">Vigilante / Recepción</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_casa_directo" class="form-label"><i class="fas fa-home me-1"></i> 1. Foto de la Fachada de la Casa</label>
+                        <input type="file" class="form-control foto-input" id="foto_casa_directo" name="foto_casa_directo" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_calle_directo" class="form-label"><i class="fas fa-road me-1"></i> 2. Foto de la Calle / Ubicación</label>
+                        <input type="file" class="form-control foto-input" id="foto_calle_directo" name="foto_calle_directo" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_cargo_directo" class="form-label"><i class="fas fa-file-signature me-1"></i> 3. Foto del Cargo Firmado</label>
+                        <input type="file" class="form-control foto-input" id="foto_cargo_directo" name="foto_cargo_directo" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Firma Digital en Pantalla</label>
+                        <div class="signature-container">
+                            <canvas id="signature-pad"></canvas>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <button type="button" id="clear-signature" class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem; border-radius: 8px;">
+                                    <i class="fas fa-eraser me-1"></i> Limpiar
+                                </button>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);"><i class="fas fa-pen-nib me-1"></i> Validado por receptor</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="firma_base64" name="firma_base64">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: PREAVISO (3 EVIDENCIAS: CASA, CALLE, PREAVISO) -->
+                <div id="seccion-preaviso" class="conditional-section" style="display: none;">
+                    <h5 class="text-warning mb-3" style="font-size: 0.95rem; font-weight: 700;"><i class="fas fa-clock me-1"></i> Registro de Preaviso — 3 Evidencias</h5>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">El sistema registrará la ausencia y programará automáticamente la habilitación de este documento para el día de mañana.</p>
+                    
+                    <div class="mb-3">
+                        <label for="foto_casa_preaviso" class="form-label"><i class="fas fa-home me-1"></i> 1. Foto de la Fachada de la Casa</label>
+                        <input type="file" class="form-control foto-input" id="foto_casa_preaviso" name="foto_casa_preaviso" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_calle_preaviso" class="form-label"><i class="fas fa-road me-1"></i> 2. Foto de la Calle / Ubicación</label>
+                        <input type="file" class="form-control foto-input" id="foto_calle_preaviso" name="foto_calle_preaviso" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_cargo_preaviso" class="form-label"><i class="fas fa-file-alt me-1"></i> 3. Foto del Preaviso Dejado</label>
+                        <input type="file" class="form-control foto-input" id="foto_cargo_preaviso" name="foto_cargo_preaviso" accept="image/*" capture="environment">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="observacion_preaviso" class="form-label">Motivo / Observación</label>
+                        <textarea class="form-control" id="observacion_preaviso" name="observacion_preaviso" rows="2" placeholder="Ej. Inmueble cerrado, nadie atiende al llamado."></textarea>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: NOTIFICACIÓN BAJO PUERTA (3 EVIDENCIAS: CASA, CALLE, BAJO PUERTA) -->
+                <div id="seccion-bajo-puerta" class="conditional-section" style="display: none;">
+                    <h5 class="text-info mb-3" style="font-size: 0.95rem; font-weight: 700;"><i class="fas fa-door-closed me-1"></i> Notificación Bajo Puerta — 3 Evidencias</h5>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Segunda visita aplicada. Se adjuntan las evidencias de cierre del trámite.</p>
+
+                    <div class="mb-3">
+                        <label for="foto_casa_puerta" class="form-label"><i class="fas fa-home me-1"></i> 1. Foto de la Fachada de la Casa</label>
+                        <input type="file" class="form-control foto-input" id="foto_casa_puerta" name="foto_casa_puerta" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_calle_puerta" class="form-label"><i class="fas fa-road me-1"></i> 2. Foto de la Calle / Ubicación</label>
+                        <input type="file" class="form-control foto-input" id="foto_calle_puerta" name="foto_calle_puerta" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="foto_cargo_puerta" class="form-label"><i class="fas fa-door-open me-1"></i> 3. Foto de la Notificación Bajo Puerta</label>
+                        <input type="file" class="form-control foto-input" id="foto_cargo_puerta" name="foto_cargo_puerta" accept="image/*" capture="environment">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="observacion_puerta" class="form-label">Descripción de la Puerta / Fachada</label>
+                        <textarea class="form-control" id="observacion_puerta" name="observacion_puerta" rows="2" placeholder="Ej. Puerta metálica negra, documento deslizado por la rendija."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn-submit-quantum">
+                    <i class="fas fa-check-circle"></i> Guardar y Procesar Gestión
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const selectGestion = document.getElementById('tipo_gestion');
+        const seccionDirecto = document.getElementById('seccion-directo');
+        const seccionPreaviso = document.getElementById('seccion-preaviso');
+        const seccionBajoPuerta = document.getElementById('seccion-bajo-puerta');
+
+        selectGestion.addEventListener('change', function() {
+            const val = this.value;
+            seccionDirecto.style.display = 'none';
+            seccionPreaviso.style.display = 'none';
+            seccionBajoPuerta.style.display = 'none';
+
+            document.getElementById('recibido_por').removeAttribute('required');
+            document.getElementById('parentesco').removeAttribute('required');
+
+            if (val === 'directo') {
+                seccionDirecto.style.display = 'block';
+                document.getElementById('recibido_por').setAttribute('required', 'true');
+                document.getElementById('parentesco').setAttribute('required', 'true');
+                setTimeout(resizeCanvas, 150);
+            } else if (val === 'preaviso') {
+                seccionPreaviso.style.display = 'block';
+            } else if (val === 'bajo_puerta') {
+                seccionBajoPuerta.style.display = 'block';
+            }
+        });
+
+        // Compresión automática de imágenes en el cliente (Ancho máx 1200px, Calidad 80%)
+        document.querySelectorAll('.foto-input').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvasImg = document.createElement('canvas');
+                        const MAX_WIDTH = 1200;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvasImg.width = MAX_WIDTH;
+                        canvasImg.height = img.height * (scaleSize > 1 ? 1 : scaleSize);
+
+                        const ctxImg = canvasImg.getContext('2d');
+                        ctxImg.drawImage(img, 0, 0, canvasImg.width, canvasImg.height);
+
+                        canvasImg.toBlob(function(blob) {
+                            const compressedFile = new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() });
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(compressedFile);
+                            input.files = dataTransfer.files;
+                        }, 'image/jpeg', 0.8);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Configuración robusta del Canvas de Firma (Independiente del CSS)
+        const canvas = document.getElementById('signature-pad');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width || canvas.offsetWidth || 400;
+            canvas.height = 180;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        if (canvas) {
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+            
+            canvas.addEventListener('touchstart', startDraw, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDraw);
+            
+            setTimeout(resizeCanvas, 100);
+        }
+
+        function startDraw(e) {
+            e.preventDefault();
+            drawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDraw() {
+            if (!drawing && document.getElementById('firma_base64').value !== '') return;
+            drawing = false;
+            
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            document.getElementById('firma_base64').value = tempCanvas.toDataURL('image/png');
+        }
+
+        const btnClear = document.getElementById('clear-signature');
+        if (btnClear) {
+            btnClear.addEventListener('click', () => {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('firma_base64').value = '';
+            });
+        }
+
+        // Validación y Bloqueo Anti-Doble Envío
+        document.getElementById('quantum-form').addEventListener('submit', function(e) {
+            const gestion = selectGestion.value;
+            if (gestion === 'directo') {
+                stopDraw();
+
+                const firmaVal = document.getElementById('firma_base64').value;
+                if (!firmaVal || firmaVal === '') {
+                    e.preventDefault();
+                    alert('Debe registrar la firma digital del receptor para entregas directas.');
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Procesando registro...';
+        });
+    </script>
+</body>
+</html>

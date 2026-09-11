@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Trace - Panel Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --surface-card: #ffffff;
+            --border-subtle: #e2e8f0;
+            --primary-accent: #2563eb;
+            --primary-light: #eff6ff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success-color: #059669;
+            --success-light: #ecfdf5;
+            --warning-color: #d97706;
+            --warning-light: #fef3c7;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding-bottom: 50px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navbar Profesional Estilo Intranet */
+        .navbar-pro {
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 0;
+            margin-bottom: 30px;
+        }
+
+        .navbar-brand-pro {
+            font-weight: 800;
+            color: #ffffff;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .navbar-brand-pro i {
+            color: var(--primary-accent);
+            background: var(--primary-light);
+            padding: 8px;
+            border-radius: 10px;
+        }
+
+        .nav-link-pro {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link-pro:hover, .nav-link-pro.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .user-badge-pro {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 50rem;
+            color: #e2e8f0;
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-logout-pro {
+            background: #dc2626;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-logout-pro:hover {
+            background: #b91c1c;
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 1350px;
+        }
+
+        /* Título de Sección */
+        .page-header-pro {
+            margin-bottom: 24px;
+        }
+
+        .page-header-pro h2 {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .page-header-pro p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Tarjetas de Estadísticas Compactas */
+        .stat-card-pro {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            height: 100%;
+        }
+
+        .stat-meta .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-meta .value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-icon.warning {
+            background: var(--warning-light);
+            color: var(--warning-color);
+        }
+
+        .stat-icon.success {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        /* Tablas Profesionales Estilizadas */
+        .pro-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .card-header-pro {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fafbfc;
+        }
+
+        .card-header-pro h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .card-header-pro h5 i {
+            color: var(--primary-accent);
+            background: var(--primary-light);
+            padding: 7px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .table-pro {
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .table-pro th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            border-top: none;
+        }
+
+        .table-pro td {
+            padding: 16px 20px;
+            vertical-align: middle;
+            font-size: 0.88rem;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .table-pro tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-pro tr:hover td {
+            background: #fafbfc;
+        }
+
+        .mono-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary-accent);
+        }
+
+        /* Botones de Acción / Evidencias en Tabla */
+        .btn-action-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            margin-right: 4px;
+        }
+
+        .btn-action-icon:hover {
+            background: var(--primary-accent);
+            color: #ffffff;
+            border-color: var(--primary-accent);
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Superior Intranet -->
+    <nav class="navbar-pro">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('admin_dashboard') }}" class="navbar-brand-pro">
+                <i class="fas fa-shipping-fast"></i> Panel Administrador
+            </a>
+            <div class="d-none d-md-flex align-items-center gap-2">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-link-pro active"><i class="fas fa-home"></i> Inicio</a>
+                <a href="{{ url_for('gestionar_motorizados') }}" class="nav-link-pro"><i class="fas fa-motorcycle"></i> Gestionar Motorizados</a>
+                <a href="{{ url_for('gestionar_entregas') }}" class="nav-link-pro"><i class="fas fa-file-alt"></i> Asignar Entregas</a>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="user-badge-pro">
+                    <i class="fas fa-user-shield text-info"></i> {{ session.get('nombre', 'Admin') }}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn-logout-pro">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm border-0 mb-4 rounded-4" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header de la Página con opción de Limpieza -->
+        <div class="page-header-pro d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2>Panel de Control de Entregas</h2>
+                <p>Supervisa en tiempo real el estado de los documentos y las asignaciones.</p>
+            </div>
+            <div>
+                <form action="{{ url_for('limpiar_sistema') }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar todas las pruebas y archivos de la carpeta uploads?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm px-3 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                        <i class="fas fa-trash-alt"></i> Limpiar Base de Datos y Uploads
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tarjetas de Estadísticas Superiores -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="stat-card-pro">
+                    <div class="stat-meta">
+                        <div class="label">Pendientes de Entrega</div>
+                        <div class="value">{{ pendientes|length }}</div>
+                    </div>
+                    <div class="stat-icon warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card-pro">
+                    <div class="stat-meta">
+                        <div class="label">Entregas Completadas</div>
+                        <div class="value">{{ entregadas|length }}</div>
+                    </div>
+                    <div class="stat-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla: Entregas Pendientes -->
+        <div class="pro-card">
+            <div class="card-header-pro">
+                <h5><i class="fas fa-clock"></i> Entregas Pendientes</h5>
+                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size: 0.7rem;">EN CURSO</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-pro">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo / Nro Doc</th>
+                            <th>Destinatario</th>
+                            <th>Dirección</th>
+                            <th>Motorizado Asignado</th>
+                            <th class="text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in pendientes %}
+                        <tr>
+                            <td class="mono-text fw-bold">#{{ p.id }}</td>
+                            <td>
+                                <span class="badge bg-light text-dark border border-secondary border-opacity-25 fw-semibold">{{ p.tipo_documento }}</span> 
+                                <span class="mono-text ms-1">{{ p.numero_documento }}</span>
+                            </td>
+                            <td class="fw-semibold">{{ p.destinatario }}</td>
+                            <td class="text-muted small text-truncate" style="max-width: 250px;">
+                                <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ p.direccion }}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">
+                                    <i class="fas fa-motorcycle me-1"></i>{{ p.motorizado_nombre if p.motorizado_nombre else 'Sin asignar' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-warning text-dark font-monospace text-uppercase" style="font-size: 0.65rem;">Pendiente</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-folder-open fa-2x mb-2 opacity-25 d-block"></i>
+                                No hay entregas pendientes registradas.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla: Entregas Completadas -->
+        <div class="pro-card">
+            <div class="card-header-pro">
+                <h5><i class="fas fa-check-circle"></i> Entregas Completadas</h5>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1 rounded-pill fw-bold" style="font-size: 0.7rem;">FINALIZADAS</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-pro">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo / Nro Doc</th>
+                            <th>Destinatario</th>
+                            <th>Motorizado</th>
+                            <th>Receptor</th>
+                            <th class="text-center">Evidencias y Firma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in entregadas %}
+                        <tr>
+                            <td class="mono-text fw-bold">#{{ e.id }}</td>
+                            <td>
+                                <span class="badge bg-light text-dark border border-secondary border-opacity-25 fw-semibold">{{ e.tipo_documento }}</span> 
+                                <span class="mono-text ms-1">{{ e.numero_documento }}</span>
+                            </td>
+                            <td class="fw-semibold">{{ e.destinatario }}</td>
+                            <td class="text-secondary">{{ e.motorizado_nombre }}</td>
+                            <td>
+                                <div class="fw-bold small text-dark">{{ e.nombre_receptor }}</div>
+                                <div class="text-muted font-monospace" style="font-size: 0.7rem;">DNI: {{ e.dni_receptor }}</div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    {% if e.foto_casa %}
+                                        {% set foto_casa_url = e.foto_casa if e.foto_casa.startswith('http') or e.foto_casa.startswith('data:image') else url_for('static', filename='uploads/' + e.foto_casa) %}
+                                        <a href="{{ foto_casa_url }}" target="_blank" class="btn-action-icon" title="Ver foto casa">
+                                            <i class="fas fa-home"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if e.foto_calle %}
+                                        {% set foto_calle_url = e.foto_calle if e.foto_calle.startswith('http') or e.foto_calle.startswith('data:image') else url_for('static', filename='uploads/' + e.foto_calle) %}
+                                        <a href="{{ foto_calle_url }}" target="_blank" class="btn-action-icon" title="Ver foto calle">
+                                            <i class="fas fa-road"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if e.foto_cargo_o_preaviso %}
+                                        {% set foto_cargo_url = e.foto_cargo_o_preaviso if e.foto_cargo_o_preaviso.startswith('http') or e.foto_cargo_o_preaviso.startswith('data:image') else url_for('static', filename='uploads/' + e.foto_cargo_o_preaviso) %}
+                                        <a href="{{ foto_cargo_url }}" target="_blank" class="btn-action-icon" title="Ver cargo o preaviso">
+                                            <i class="fas fa-file-image"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if e.firma %}
+                                        {% set firma_url = e.firma if e.firma.startswith('http') or e.firma.startswith('data:image') else url_for('static', filename='uploads/' + e.firma) %}
+                                        <a href="{{ firma_url }}" target="_blank" class="btn-action-icon text-success border-success bg-success bg-opacity-10" title="Ver firma digital">
+                                            <i class="fas fa-signature"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-inbox fa-2x mb-2 opacity-25 d-block"></i>
+                                No hay entregas completadas todavía.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
